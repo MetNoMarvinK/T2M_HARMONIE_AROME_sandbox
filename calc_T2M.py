@@ -7,8 +7,6 @@ Created on Thu Mar  7 15:34:34 2024
 """
 
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mticker
-from matplotlib import cm
 import numpy as np
 import seaborn as sns
 from netCDF4 import Dataset
