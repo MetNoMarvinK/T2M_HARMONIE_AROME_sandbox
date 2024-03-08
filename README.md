@@ -3,4 +3,5 @@ Designed to get an intuituve idea about the model's behviour. Includes the optio
 
 contains:
 HARMONIE.py : all the routines translated from Fortran to python
+
 calc_T2M.py : examples on how to use the functions and create some figures
