@@ -6,10 +6,7 @@ Created on Thu Mar  7 15:34:34 2024
 @author: marvink
 """
 
-import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
-from netCDF4 import Dataset
 from HARMONIE import *
 sns.set(style='whitegrid')
 # how to use it
