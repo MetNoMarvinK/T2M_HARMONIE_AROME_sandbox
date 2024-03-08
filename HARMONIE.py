@@ -398,7 +398,7 @@ def find_closest_get_data(year,month,day,plon,plat,dn='det'):
     
     Parameters:
     year   : year as YYYY
-    month  : mont as MM
+    month  : month as MM
     day    : day as DD
     plon   : lon of point
     plat   : lat of point
