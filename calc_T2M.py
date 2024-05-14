@@ -8,7 +8,6 @@ Created on Thu Mar  7 15:34:34 2024
 
 import numpy as np
 from HARMONIE import *
-sns.set(style='whitegrid')
 # how to use it
 help(call_all)
 #%% the plot about impact on CH 
@@ -29,11 +28,11 @@ PS     = np.full(len(PTA), 101100)     # surface Pressure
 # calculate all coeffs and variables
 # first for REF, REF = T2MFIX for T2M
 emulate = 'REF'
-PTNM1, H1, PRI1 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0, PZ0H, PS, emulate)
+PTNM1, H1, PRI1, PQNM1, PHUNM1 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0, PZ0H, PS, emulate)
 
 emulate = 'AA'
 # second as in AA/CARRA1 model (XRIMAX=0)
-PTNM2, H2, PRI2 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0, PZ0H, PS, emulate)
+PTNM2, H2, PRI2, PQNM2, PHUNM2 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0, PZ0H, PS, emulate)
 
 # plot the data, CARE rename figure if needed!
 emulate1 = 'REF'
@@ -55,7 +54,7 @@ PZ0    = np.full(len(PTA), 0.001)   # roughness length for momentum, snow
 PS     = np.full(len(PTA), 101100)  # surface Pressure
 
 emulate = 'FORCE'
-PTNM1, H1, PRI1 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0, PZ0H, PS, emulate,
+PTNM1, H1, PRI1, PQNM, PHUNM = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0, PZ0H, PS, emulate,
                            PRI_FORCE=PRI_F)
 plot_single_T2M_H(PTA,PTS,PTNM1,emulate,PRI1,H1,showRi=True)
 
@@ -70,8 +69,8 @@ find_closest_get_data('2018', '03', '14', 26.637728, 67.361866,dn='full')
 # calculate all coeffs and variables
 emulate1 = 'REF'
 emulate2 = 'AA'
-PTNM1, H1, PRI1 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0EFF, PZ0H, PS, emulate1)
-PTNM2, H2, PRI2 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0EFF, PZ0H, PS, emulate2)
+PTNM1, H1, PRI1, PQNM1, PHUNM1 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0EFF, PZ0H, PS, emulate1)
+PTNM2, H2, PRI2, PQNM2, PHUNM2 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0EFF, PZ0H, PS, emulate2)
 
 # plot and include T2M / H from the archive
 compare_T2M_H(PTA,PTS,PTNM1,PTNM2,emulate1,emulate2,PRI1,PRI2,H1,H2,
@@ -85,8 +84,8 @@ find_closest_get_data('2024', '02', '10', 23.5375, 79.8747,dn='det')
 # calculate all coeffs and variables
 emulate1 = 'REF'
 emulate2 = 'AA'
-PTNM1, H1, PRI1 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0EFF, PZ0H, PS, emulate1)
-PTNM2, H2, PRI2 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0EFF, PZ0H, PS, emulate2)
+PTNM1, H1, PRI1, PQNM1, PHUNM1 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0EFF, PZ0H, PS, emulate1)
+PTNM2, H2, PRI2, PQNM2, PHUNM2 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0EFF, PZ0H, PS, emulate2)
 
 # plot and include T2M / H from the archive
 compare_T2M_H(PTA,PTS,PTNM1,PTNM2,emulate1,emulate2,PRI1,PRI2,H1,H2,
