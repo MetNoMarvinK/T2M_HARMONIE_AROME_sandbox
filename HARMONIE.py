@@ -290,6 +290,82 @@ def heat_flux(PVMOD,CH,PTS,PTA):
     
     return H
 
+def e_sat(PT,PP):
+    XAVOGADRO = 6.0221367E+23
+    XBOLTZ    = 1.380658E-23
+    XMD    = 28.9644E-3
+    XMV    = 18.0153E-3
+    XRD    = XAVOGADRO * XBOLTZ / XMD
+    XRV    = XAVOGADRO * XBOLTZ / XMV
+    XCPD   = 7.* XRD /2.
+    XCPV   = 4.* XRV
+    XRHOLW = 1000.
+    XRHOLI = 917.
+    XCONDI = 2.22
+    XCL    = 4.218E+3
+    XCI    = 2.106E+3
+    XTT    = 273.16
+    XTTSI  = XTT - 1.8
+    XICEC  = 0.5
+    XTTS   = XTT*(1-XICEC) + XTTSI*XICEC
+    XLVTT  = 2.5008E+6
+    XLSTT  = 2.8345E+6
+    XLMTT  = XLSTT - XLVTT
+    XESTT  = 611.14
+    XGAMW  = (XCL - XCPV) / XRV
+    XBETAW = (XLVTT/XRV) + (XGAMW * XTT)
+    XALPW  = np.log(XESTT) + (XBETAW /XTT) + (XGAMW *np.log(XTT))
+    XGAMI  = (XCI - XCPV) / XRV
+    XBETAI = (XLSTT/XRV) + (XGAMI * XTT)
+    XALPI  = np.log(XESTT) + (XBETAI /XTT) + (XGAMI *np.log(XTT))
+    
+    
+    ZALP  = np.log(XESTT) + (XBETAW /XTT) + (XGAMW *np.log(XTT))
+    ZBETA = XBETAW
+    ZGAM  = XGAMW
+    ZFOES = np.exp( ZALP - ZBETA/PT - ZGAM*np.log(PT))
+
+    ZWORK1 = ZFOES/PP
+    ZWORK2 = XRD/XRV
+    ZQSAT = ZWORK2*ZWORK1 / (1.+(ZWORK2-1.)*ZWORK1)
+    
+    return ZQSAT
+
+def hu_hui(wg,wfc):
+    if wg<wfc:
+        hu = 0.5*(1-np.cos(wg/wfc *np.pi))
+    else:
+        hu = 1
+        
+    return hu
+
+# a bit too much external info needed for now latent heat flux currently
+# def latent_heat_flux(PVMOD,CH,PTS,PTA,PQS,PQA,PS,PA):
+#     # constanst
+#     rho_a = 1.3 
+#     cp    = 1004.7088578330674
+
+#     veg  = Dataset('veg.nc').variables['veg'][:,:]   # vegetation cover
+#     psng = Dataset('psng.nc').variables['psng'][:,:] # snow over ground
+#     psnv = Dataset('psnv.nc').variables['psnv'][:,:] # snow over vegetation
+#     di   = Dataset('di.nc').variables['di'][:,:]     # surface ice fraction
+#     # COMPUTE SATURATION VAPOR PRESSURE
+#     QS_sat = e_sat(PTS,PS)
+#     QA_sat = e_sat(PTA,PA)
+#     # relative humidity at ground for portion of liquid and frozen parts
+#     hu  = hu_hui(wg,wfc)
+#     hui = hu_hui(wgf,wfc2)
+#     # Halstead coefficient calculation
+#     Ra = (PVMOD*CH)**-1
+#     hv =(1 − δ)Ra /(Ra + Rs ) + δ
+    
+   
+#     Egl = (1-veg)*(1-psng)*(1-di)* rho_a* CH * PVMOD *(hu * QS_sat - PQA )
+#     #Ev = veg(1-psnv)*rho_a*CH*PVMOD* hv (qsat (Ts )-qa )
+    
+#     LE = L*Egl + L*Ev + Li* (Es + Egf )
+    
+#     return LE
 #%% simple heat flux in model code (isba_fluxes.F90) ..  no WS, no CH
 def heat_flux_model(PTS,PTA,PA,PS,PVMOD,PCH,P0=101315):
     # constants
@@ -380,6 +456,20 @@ def call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0, PZ0H, PS, emulate, PA=None, PH=2,
     rall = False : T2M, H, RI, Q2M, HU2M
     rall = True  : T2M, H, RI, CH, CD, Pra, Q2M, HU2M
     """
+    resh = False
+    if len(PTA.shape)==2: # 2D fields are given as input, reshape for calculation
+        # for reshaping output later on
+        resh = True
+        D1  = PTA.shape[0]
+        D2  = PTA.shape[1]
+        PTA = PTA.flatten()
+        PQA = PQA.flatten()
+        PTS = PTS.flatten()
+        PQS = PQS.flatten()
+        PVMOD = PVMOD.flatten()
+        PZ0 = PZ0.flatten()
+        PZ0H= PZ0H.flatten()
+        PS = PS.flatten()
     # some sanity checks
     if not len(PTA)==len(PTS)==len(PVMOD)==len(PS)==len(PQS)==len(PQA):
         print('PTA, PQA, PTS, PQS, PVMOD, and PS need to have the same length!')
@@ -418,6 +508,8 @@ def call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0, PZ0H, PS, emulate, PA=None, PH=2,
     # settings accordign to emulated model version
     XRIMAX, RISHIFT,XVMODFAC = model_versions(emulate, MODFAC_F)
     
+    # 
+    
     # calculate Richardson
     if emulate != 'FORCE':
         PRI = calculate_Richardsons_number(PTA, PQA, PTS, PQS, PVMOD, PS ,PA,
@@ -436,83 +528,22 @@ def call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0, PZ0H, PS, emulate, PA=None, PH=2,
     PTNM,PQNM, PHUNM  = CLS_TQ(PTA, PTS, PCD, PCH, PRI, PH, PHT, PZ0H, PS, PA, PQS, PQA)
     # calculate heat flux
     H        = heat_flux(PVMOD, PCH, PTS, PTA)
+    
+    # reshape to 2D if 2D was given
+    if resh:
+        PTNM = PTNM.reshape(D1,D2)
+        H    = H.reshape(D1,D2)
+        PRI  = PRI.reshape(D1,D2)
+        PCH  = PCH.reshape(D1,D2)
+        PCD  = PCD.reshape(D1,D2)
+        PRA  = PRA.reshape(D1,D2)
+        PQNM = PQNM.reshape(D1,D2)
+        PHUNM= PHUNM.reshape(D1,D2)
+        
     if rall:
         return PTNM, H, PRI, PCH, PCD, PRA, PQNM, PHUNM
     else:
         return PTNM, H, PRI, PQNM, PHUNM
-#%% for extracting from archive
-def find_closest_get_data(year,month,day,plon,plat,dn='det'):
-    """
-    This function gets all required fields from thredds. Always uses 00UTC run.
-    
-    NOTE: Thredds stores grid box averages of Z0H and Z0. Differences will be 
-    observed when comparing T2M and H from this routine with forecast data due 
-    to the (current) inability to replicate SURFEX's weighted approach here.
-    
-    Parameters:
-    year   : year as YYYY
-    month  : month as MM
-    day    : day as DD
-    plon   : lon of point
-    plat   : lat of point
-    dn     : file identifier (changed between "det" and "full" on thredds)
-    
-    Returns:
-    dat    : netCDF data handler for the file
-    TA     : atm. Temperature
-    TS     : surf. Temperature
-    QA     : atm. specific humidity
-    QS     : surf. specific humidity ()sometimes Q2M if surface is not avail)
-    PZ0H   : grid box averaged roghness for heat
-    PZ0    : grid box averaged rougness for momentum
-    WS     : atm. wind speed
-    T2M    : 2m-temperature
-    HS     : sensible heat flux
-    PS     : surface pressure
-    PA     : atm. pressure
-    """
-    # hard coded search for 00 UTC start
-    url = f'https://thredds.met.no/thredds/dodsC/aromearcticarchive/{year}/{month}/{day}/arome_arctic_{dn}_2_5km_{year}{month}{day}T00Z.nc'
-    dat = Dataset(url)
-    # get clostest x,y index to point
-    lats = dat.variables['latitude'][:,:]
-    lons = dat.variables['longitude'][:,:]
-    abslat = np.abs(lats-plat)
-    abslon= np.abs(lons-plon)
-    c = np.maximum(abslon,abslat)
-    x, y = np.where(c == np.min(c))
-    x, y = x[0],y[0]
-    if dn == 'det':
-        TA   = dat.variables['air_temperature_ml'][:,-1,x,y].data
-        TS   = dat.variables['air_temperature_0m'][:,0,x,y].data
-        QA   = dat.variables['specific_humidity_ml'][:,-1,x,y].data
-        QS   = dat.variables['SFX_Q2M'][:,x,y].data # not optimal since it is 2m... but 0m not stored, whatever
-        PZ0H = dat.variables['SFX_Z0H'][:,x,y].data    
-        PZ0  = dat.variables['SFX_Z0'][:,x,y].data
-        UA   = dat.variables['x_wind_ml'][:,-1,x,y].data
-        VA   = dat.variables['y_wind_ml'][:,-1,x,y].data
-        WS   = np.sqrt(UA**2 + VA**2)
-        T2M  = dat.variables['SFX_T2M'][:,x,y].data # for checking how far I am off (missing tile averaging etc)
-        HS   = dat.variables['SFX_H'][:,x,y].data
-        PS   = dat.variables['surface_air_pressure'][:,0,x,y].data
-        PA   =  PS * dat.variables['hybrid'][-1].data
-    elif dn == 'full':
-        url = f'https://thredds.met.no/thredds/dodsC/aromearcticarchive/{year}/{month}/{day}/arome_arctic_sfx_2_5km_{year}{month}{day}T00Z.nc'
-        sfx = Dataset(url)
-        TA   = dat.variables['air_temperature_ml'][:,-1,x,y].data
-        TS   = dat.variables['air_temperature_0m'][:,0,x,y].data
-        QA   = dat.variables['specific_humidity_ml'][:,-1,x,y].data
-        QS   = sfx.variables['Q2M'][:,x,y].data # not optimal since it is 2m... but 0m not stored, whatever
-        PZ0H = sfx.variables['Z0H'][:,x,y].data    
-        PZ0  = sfx.variables['Z0'][:,x,y].data
-        UA   = dat.variables['x_wind_ml'][:,-1,x,y].data
-        VA   = dat.variables['y_wind_ml'][:,-1,x,y].data
-        WS   = np.sqrt(UA**2 + VA**2)
-        T2M  = sfx.variables['T2M'][:,x,y].data # for checking how far I am off (missing tile averaging etc)
-        HS   = sfx.variables['H'][:,x,y].data
-        PS   = dat.variables['surface_air_pressure'][:,0,x,y].data
-        PA   =  PS * dat.variables['hybrid'][-1].data
-    return dat, TA, TS, QA, QS, PZ0H, PZ0, WS, T2M, HS, PS, PA
 
 #%% plottig routine for comparing two different settings
 
