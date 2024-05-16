@@ -5,3 +5,5 @@ contains:
 HARMONIE.py : all the routines translated from Fortran to python
 
 calc_T2M.py : examples on how to use the functions and create some figures
+
+extract_thredds.py : functions to extract either time series or entire model domain data from the operational archive of Met-Norway
