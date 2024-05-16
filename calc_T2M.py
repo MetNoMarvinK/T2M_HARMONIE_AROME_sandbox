@@ -103,39 +103,3 @@ plt.colorbar(label='difference T2M (K)')
 plt.title(emulate2+'-'+emulate1)
 plt.show()
 
-
-
-
-#%% OLD examples, extracting from thredds not in use anymore
-# info about function
-help(find_closest_get_data)
-# example Sodankylä during YOPP-SOP1
-dat, PTA,PTS,PQA,PQS,PZ0H,PZ0EFF,PVMOD,T2M_archive,H_archive, PS, PA = \
-old_t_retrieval('2018', '03', '14', 26.637728, 67.361866,dn='full')
-
-
-# calculate all coeffs and variables
-emulate1 = 'REF'
-emulate2 = 'AA'
-PTNM1, H1, PRI1, PQNM1, PHUNM1 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0EFF, PZ0H, PS, emulate1)
-PTNM2, H2, PRI2, PQNM2, PHUNM2 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0EFF, PZ0H, PS, emulate2)
-
-# plot and include T2M / H from the archive
-compare_T2M_H(PTA,PTS,PTNM1,PTNM2,emulate1,emulate2,PRI1,PRI2,H1,H2,
-           T2M_archive=T2M_archive,H_archive=H_archive)
-
-#%% use a grid box with one dominant cover type to show that it does align!
-dat, PTA,PTS,PQA,PQS,PZ0H,PZ0EFF,PVMOD,T2M_archive,H_archive, PS, PA = \
-old_t_retrieval('2024', '02', '10', 23.5375, 79.8747,dn='det')
-
-
-# calculate all coeffs and variables
-emulate1 = 'REF'
-emulate2 = 'AA'
-PTNM1, H1, PRI1, PQNM1, PHUNM1 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0EFF, PZ0H, PS, emulate1)
-PTNM2, H2, PRI2, PQNM2, PHUNM2 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0EFF, PZ0H, PS, emulate2)
-
-# plot and include T2M / H from the archive
-compare_T2M_H(PTA,PTS,PTNM1,PTNM2,emulate1,emulate2,PRI1,PRI2,H1,H2,
-           T2M_archive=T2M_archive,H_archive=H_archive)
-
