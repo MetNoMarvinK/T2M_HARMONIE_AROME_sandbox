@@ -21,7 +21,7 @@ PQA    = np.full(len(PTA), 0.0005)  # specific humidity atm
 PQS    = np.full(len(PTA), 0.001)   # specific humidity surface
 PH     = np.full(len(PTA), 2)       # height to be interpolated towards
 PHT    = np.full(len(PTA), 11)      # model level height
-PZ0H   = np.full(len(PTA), 0.0001)  # roughness length for heat, snown
+PZ0H   = np.full(len(PTA), 0.1)  # roughness length for heat, snown
 PZ0    = np.full(len(PTA), 0.001)   # roughness length for momentum, snow
 PS     = np.full(len(PTA), 101100)     # surface Pressure
 
@@ -58,12 +58,60 @@ PTNM1, H1, PRI1, PQNM, PHUNM = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0, PZ0H, PS,
                            PRI_FORCE=PRI_F)
 plot_single_T2M_H(PTA,PTS,PTNM1,emulate,PRI1,H1,showRi=True)
 
-#%% example using model data from thredds
+#%% extracting from thredds
+from extract_thredds import *
+#help(extract_timeseries)
+#help(extract_entire_domain)
+#%% extract time series from Thredds
+dat, PTA,PTS,PQA,PQS,PZ0H,PZ0EFF,T2M_archive,H_archive, PS, PA, PVMOD = \
+extract_timeseries(2024, 2, 10, 23.5375, 79.8747,model='AA')
+
+# calculate all coeffs and variables
+emulate1 = 'REF'
+emulate2 = 'AA'
+PTNM1, H1, PRI1, PQNM1, PHUNM1 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0EFF, PZ0H, PS, emulate1)
+PTNM2, H2, PRI2, PQNM2, PHUNM2 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0EFF, PZ0H, PS, emulate2)
+
+# plot and include T2M / H from the archive
+compare_T2M_H(PTA,PTS,PTNM1,PTNM2,emulate1,emulate2,PRI1,PRI2,H1,H2,
+           T2M_archive=T2M_archive,H_archive=H_archive)
+
+#%% extract entire domain from Thredds
+dat, PTA,PTS,PQA,PQS,PZ0H,PZ0EFF,T2M_archive,H_archive, PS, PA, PVMOD = \
+extract_entire_domain(2024,1,10,25,'MEPS')
+
+
+emulate1 = 'REF'
+emulate2 = 'AA'
+PTNM1, H1, PRI1, PQNM1, PHUNM1 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0EFF, PZ0H, PS, emulate1)
+PTNM2, H2, PRI2, PQNM2, PHUNM2 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0EFF, PZ0H, PS, emulate2)
+
+plt.figure(figsize=(20,8))
+plt.subplot(1,2,1)
+plt.pcolormesh(PTNM1,vmin=240,vmax=280)
+plt.colorbar(label='T2M (K)')
+plt.title(emulate1)
+plt.subplot(1,2,2)
+plt.pcolormesh(PTNM2,vmin=240,vmax=280)
+plt.colorbar(label='T2M (K)')
+plt.title(emulate2)
+plt.show()
+
+plt.figure(figsize=(12,8))
+plt.pcolormesh(PTNM2-PTNM1,colormap=plt.cm.coolwarm,vmin=-2,vmax=2)
+plt.colorbar(label='difference T2M (K)')
+plt.title(emulate2+'-'+emulate1)
+plt.show()
+
+
+
+
+#%% OLD examples, extracting from thredds not in use anymore
 # info about function
 help(find_closest_get_data)
 # example Sodankylä during YOPP-SOP1
 dat, PTA,PTS,PQA,PQS,PZ0H,PZ0EFF,PVMOD,T2M_archive,H_archive, PS, PA = \
-find_closest_get_data('2018', '03', '14', 26.637728, 67.361866,dn='full')
+old_t_retrieval('2018', '03', '14', 26.637728, 67.361866,dn='full')
 
 
 # calculate all coeffs and variables
@@ -78,7 +126,7 @@ compare_T2M_H(PTA,PTS,PTNM1,PTNM2,emulate1,emulate2,PRI1,PRI2,H1,H2,
 
 #%% use a grid box with one dominant cover type to show that it does align!
 dat, PTA,PTS,PQA,PQS,PZ0H,PZ0EFF,PVMOD,T2M_archive,H_archive, PS, PA = \
-find_closest_get_data('2024', '02', '10', 23.5375, 79.8747,dn='det')
+old_t_retrieval('2024', '02', '10', 23.5375, 79.8747,dn='det')
 
 
 # calculate all coeffs and variables
@@ -90,3 +138,4 @@ PTNM2, H2, PRI2, PQNM2, PHUNM2 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0EFF, PZ0H
 # plot and include T2M / H from the archive
 compare_T2M_H(PTA,PTS,PTNM1,PTNM2,emulate1,emulate2,PRI1,PRI2,H1,H2,
            T2M_archive=T2M_archive,H_archive=H_archive)
+
