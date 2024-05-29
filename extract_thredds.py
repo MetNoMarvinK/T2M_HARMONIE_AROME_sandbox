@@ -83,7 +83,8 @@ def interactive_dataset_selection(catalog_url, var_names):
         var_names = missing_vars
 
         if not missing_vars:
-            print(f"All required variables found.")
+            print("All required variables found.")
+            print("Extracting variables ...")
             return datasets, var_sets
         else:
             print(f"Missing variables from {opendap_url}: {missing_vars}")
