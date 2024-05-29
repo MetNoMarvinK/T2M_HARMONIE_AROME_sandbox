@@ -290,6 +290,7 @@ def heat_flux(PVMOD,CH,PTS,PTA):
     
     return H
 
+#%% latent heat flux (not yet fully included)
 def e_sat(PT,PP):
     XAVOGADRO = 6.0221367E+23
     XBOLTZ    = 1.380658E-23
@@ -403,6 +404,9 @@ def model_versions(emulate, MODFAC_F):
     XVMODFAC= 0.1   # used in wind_treshold during computation of Ri
     if emulate == 'REF':
         XRIMAX = None
+        XVMODFAC = 0.0
+    elif emulate == 'T2Mf': # T2Mfix
+        XRIMAX = None
     elif emulate == 'AA':
         XRIMAX = 0.0
     elif emulate == 'MEPS':
@@ -426,6 +430,7 @@ def call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0, PZ0H, PS, emulate, PA=None, PH=2,
                                Prandtl number (PRA)
                                heat fluxes (H)
                                2m-temperature (PTNM)
+                               2m-specific humidity (PQNM)
     
     Parameters:
     PTA   : atm. Temperature, lowermost model level (K)
@@ -477,13 +482,14 @@ def call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0, PZ0H, PS, emulate, PA=None, PH=2,
     if PH > PHT:
         print('PH needs to be smaller than PHT!')
         return
-    if emulate not in ['REF', 'AA', 'MEPS', 'RI02', 'FORCE']:
+    if emulate not in ['REF', 'AA', 'MEPS', 'RI02', 'FORCE', 'T2Mf']:
         print('emulate not defined for ', emulate)
         print('these are your options:')
-        print('REF  : no limit on XRI (T2Mfix)')
+        print('REF  : no limit on XRI, XVMODFAC=0')
         print('AA   : XRIMAX = 0 (AROME-Arctic, CARRA1)')
         print('MEPS : XRIMAX=0.4, XRISHIFT=0.1 (MEPS)')
         print('RI02 : XRIMAX=0.2, (test Patrick)')
+        print('T2Mf : no limit on XRI,')
         print('FORCE: Manually provide RI and activate RISHIFT')
         return
     # get PA from hybrid calc if not given
