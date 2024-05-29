@@ -21,9 +21,9 @@ PQA    = np.full(len(PTA), 0.0005)  # specific humidity atm
 PQS    = np.full(len(PTA), 0.001)   # specific humidity surface
 PH     = np.full(len(PTA), 2)       # height to be interpolated towards
 PHT    = np.full(len(PTA), 11)      # model level height
-PZ0H   = np.full(len(PTA), 0.1)  # roughness length for heat, snown
-PZ0    = np.full(len(PTA), 0.001)   # roughness length for momentum, snow
-PS     = np.full(len(PTA), 101100)     # surface Pressure
+PZ0H   = np.full(len(PTA), 0.1)     # roughness length for heat
+PZ0    = np.full(len(PTA), 0.01)    # roughness length for momentum
+PS     = np.full(len(PTA), 101100)  # surface Pressure
 
 # calculate all coeffs and variables
 # first for REF, REF = T2MFIX for T2M
@@ -36,7 +36,7 @@ PTNM2, H2, PRI2, PQNM2, PHUNM2 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0, PZ0H, P
 
 # plot the data, CARE rename figure if needed!
 emulate1 = 'REF'
-emulate2 = 'CARRA1'
+emulate2 = 'AA'
 compare_T2M_H(PTA,PTS,PTNM1,PTNM2,emulate1,emulate2,PRI1,PRI2,H1,H2,
               showRi=True)
 
@@ -62,9 +62,23 @@ plot_single_T2M_H(PTA,PTS,PTNM1,emulate,PRI1,H1,showRi=True)
 from extract_thredds import *
 #help(extract_timeseries)
 #help(extract_entire_domain)
-#%% extract time series from Thredds
+#%% extract time series from Thredds, one tile fraction present
 dat, PTA,PTS,PQA,PQS,PZ0H,PZ0EFF,T2M_archive,H_archive, PS, PA, PVMOD = \
 extract_timeseries(2024, 2, 10, 23.5375, 79.8747,model='AA')
+
+# calculate all coeffs and variables
+emulate1 = 'REF'
+emulate2 = 'AA'
+PTNM1, H1, PRI1, PQNM1, PHUNM1 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0EFF, PZ0H, PS, emulate1)
+PTNM2, H2, PRI2, PQNM2, PHUNM2 = call_all(PTA, PQA, PTS, PQS, PVMOD,PZ0EFF, PZ0H, PS, emulate2)
+
+# plot and include T2M / H from the archive
+compare_T2M_H(PTA,PTS,PTNM1,PTNM2,emulate1,emulate2,PRI1,PRI2,H1,H2,
+           T2M_archive=T2M_archive,H_archive=H_archive)
+
+#%% extract time series from Thredds with multiple tile fraction present (Sodankylä)
+dat, PTA,PTS,PQA,PQS,PZ0H,PZ0EFF,T2M_archive,H_archive, PS, PA, PVMOD = \
+extract_timeseries(2018, 3, 14, 26.629, 67.367,model='AA')
 
 # calculate all coeffs and variables
 emulate1 = 'REF'
@@ -98,8 +112,13 @@ plt.title(emulate2)
 plt.show()
 
 plt.figure(figsize=(12,8))
-plt.pcolormesh(PTNM2-PTNM1,colormap=plt.cm.coolwarm,vmin=-2,vmax=2)
+plt.pcolormesh(PTNM2-PTNM1,cmap=plt.cm.coolwarm,vmin=-2,vmax=2)
 plt.colorbar(label='difference T2M (K)')
 plt.title(emulate2+'-'+emulate1)
 plt.show()
 
+plt.figure(figsize=(12,8))
+plt.pcolormesh(H2-H1,cmap=plt.cm.coolwarm,vmin=-100,vmax=100)
+plt.colorbar(label='difference H (w/m2)')
+plt.title(emulate2+'-'+emulate1)
+plt.show()
